@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 700" role="img" aria-labelledby="title desc">
+  <title id="title">Gaming Cafe Outbreak</title>
+  <desc id="desc">A gaming cafe with glowing monitors and a wheeled chair escape plan.</desc>
+  <rect width="900" height="700" fill="#111611"/>
+  <path d="M80 105h740v430H80z" fill="#1d241f" stroke="#3b463e" stroke-width="10"/>
+  <path d="M0 535h900v165H0z" fill="#0d100e"/>
+  <g stroke="#101410" stroke-width="8">
+    <rect x="135" y="185" width="165" height="105" rx="10" fill="#263028"/>
+    <rect x="370" y="185" width="165" height="105" rx="10" fill="#263028"/>
+    <rect x="605" y="185" width="165" height="105" rx="10" fill="#263028"/>
+  </g>
+  <g fill="#d7ef77">
+    <path d="M165 220h95v18h-95zM400 220h95v18h-95zM635 220h95v18h-95z"/>
+    <path d="M180 250h55v12h-55zM415 250h55v12h-55zM650 250h55v12h-55z"/>
+  </g>
+  <path d="M210 330h480v45H210z" fill="#30382f" stroke="#101410" stroke-width="8"/>
+  <g fill="#394333" stroke="#101410" stroke-width="8">
+    <circle cx="450" cy="462" r="55"/>
+    <path d="M430 510h40v75h-40z"/>
+    <path d="M390 590h120"/>
+  </g>
+  <path d="M620 435h88l36 75h-98z" fill="#f0bd5f" stroke="#101410" stroke-width="8"/>
+  <path d="M645 470h60" stroke="#101410" stroke-width="7" stroke-linecap="round"/>
+</svg>

@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 700" role="img" aria-labelledby="title desc">
+  <title id="title">Hostel Outbreak</title>
+  <desc id="desc">A hostel corridor with flickering lights and a snack packet on the floor.</desc>
+  <rect width="900" height="700" fill="#121613"/>
+  <path d="M90 80h720v520H90z" fill="#202820" stroke="#3b463e" stroke-width="10"/>
+  <path d="M380 80h140v520H380z" fill="#111611"/>
+  <path d="M0 600h900v100H0z" fill="#0d100e"/>
+  <g fill="#2e382f" stroke="#3b463e" stroke-width="6">
+    <path d="M130 145h160v220H130zM610 145h160v220H610z"/>
+    <path d="M150 390h120v40H150zM630 390h120v40H630z"/>
+  </g>
+  <g fill="#d7ef77" opacity=".8">
+    <rect x="405" y="105" width="90" height="24" rx="12"/>
+    <rect x="412" y="205" width="76" height="18" rx="9"/>
+    <rect x="418" y="305" width="64" height="16" rx="8"/>
+  </g>
+  <path d="M415 500l70 20 50 58-160-10z" fill="#f0bd5f" stroke="#101410" stroke-width="8"/>
+  <path d="M426 532l83 18" stroke="#101410" stroke-width="7" stroke-linecap="round"/>
+  <g fill="#87a36c" stroke="#101410" stroke-width="7">
+    <circle cx="700" cy="510" r="28"/>
+    <path d="M670 544h60l18 70h-96z"/>
+  </g>
+</svg>

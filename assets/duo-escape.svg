@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 700" role="img" aria-labelledby="title desc">
+  <title id="title">Duo Escape</title>
+  <desc id="desc">Two survivors escape together toward a rescue vehicle under green sunrise light.</desc>
+  <rect width="900" height="700" fill="#121613"/>
+  <radialGradient id="sun" cx="50%" cy="28%" r="55%">
+    <stop offset="0" stop-color="#d7ef77" stop-opacity=".7"/>
+    <stop offset="1" stop-color="#121613" stop-opacity="0"/>
+  </radialGradient>
+  <rect width="900" height="700" fill="url(#sun)"/>
+  <path d="M0 535h900v165H0z" fill="#101410"/>
+  <path d="M130 535c170-120 460-120 640 0" fill="none" stroke="#3b463e" stroke-width="58" stroke-linecap="round"/>
+  <path d="M565 400h190l45 85v70H530v-85z" fill="#d7ef77" stroke="#101410" stroke-width="9"/>
+  <circle cx="590" cy="555" r="34" fill="#101410" stroke="#3b463e" stroke-width="10"/>
+  <circle cx="745" cy="555" r="34" fill="#101410" stroke="#3b463e" stroke-width="10"/>
+  <g fill="#87a36c" stroke="#101410" stroke-width="7">
+    <circle cx="330" cy="410" r="28"/>
+    <path d="M302 440h58l18 80h-94z"/>
+    <circle cx="430" cy="410" r="28"/>
+    <path d="M402 440h58l18 80h-94z"/>
+  </g>
+  <path d="M362 466h45" stroke="#d7ef77" stroke-width="10" stroke-linecap="round"/>
+</svg>

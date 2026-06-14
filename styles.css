@@ -394,6 +394,26 @@ label {
   transform: translateX(6px) rotate(0.2deg);
 }
 
+.vibe-hero,
+.vibe-nice {
+  border-left: 5px solid var(--green);
+}
+
+.vibe-betray,
+.vibe-revenge {
+  border-left: 5px solid var(--red);
+}
+
+.vibe-selfish,
+.vibe-snack {
+  border-left: 5px solid var(--yellow);
+}
+
+.vibe-chaos,
+.vibe-brave {
+  border-left: 5px solid var(--accent);
+}
+
 .choice-button strong {
   color: var(--text);
 }
