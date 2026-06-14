@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Dead Link: Two Player Zombie Survival</title>
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <main class="app">
+      <section class="hero" id="setupScreen">
+        <div class="hero-art" aria-hidden="true">
+          <img src="assets/zombie-street.svg" alt="">
+        </div>
+        <div class="setup-panel">
+          <p class="eyebrow">Two player text survival</p>
+          <h1>Dead Link</h1>
+          <p class="intro">
+            Create a link, invite a second survivor, then take turns choosing how to survive the outbreak.
+            Food can save you or poison you. Fights can maul you. Betrayal is always on the table.
+          </p>
+
+          <form id="hostForm" class="setup-form">
+            <label for="hostName">Host survivor name</label>
+            <div class="row">
+              <input id="hostName" name="hostName" autocomplete="name" maxlength="18" placeholder="Asha">
+              <button type="submit">Create Link</button>
+            </div>
+          </form>
+
+          <form id="joinForm" class="setup-form hidden">
+            <label for="guestName">Receiver survivor name</label>
+            <div class="row">
+              <input id="guestName" name="guestName" autocomplete="name" maxlength="18" placeholder="Ravi">
+              <button type="submit">Start Game</button>
+            </div>
+          </form>
+
+          <div id="shareBox" class="share-box hidden">
+            <p>Send this link to player 2:</p>
+            <div class="row">
+              <input id="shareLink" readonly>
+              <button id="copyInvite" type="button">Copy</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="game hidden" id="gameScreen">
+        <header class="topbar">
+          <div>
+            <p class="eyebrow">Day <span id="dayLabel">1</span> of the outbreak</p>
+            <h2 id="turnLabel">Your move</h2>
+          </div>
+          <div class="actions">
+            <button id="copySave" type="button">Copy Save Link</button>
+            <button id="newGame" type="button">New Game</button>
+          </div>
+        </header>
+
+        <section class="survivors" id="survivors"></section>
+
+        <section class="scene">
+          <div class="scene-image">
+            <img id="sceneImage" src="assets/abandoned-mall.svg" alt="">
+          </div>
+          <div class="story-card">
+            <p class="tag" id="scenarioTag">Scenario</p>
+            <h3 id="scenarioTitle">The city waits.</h3>
+            <p id="scenarioText"></p>
+            <div class="choices" id="choices"></div>
+          </div>
+        </section>
+
+        <section class="log-panel">
+          <h3>Survival Log</h3>
+          <ol id="log"></ol>
+        </section>
+      </section>
+    </main>
+
+    <script src="script.js"></script>
+  </body>
+</html>

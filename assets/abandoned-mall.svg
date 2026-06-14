@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 700" role="img" aria-labelledby="title desc">
+  <title id="title">Abandoned mall</title>
+  <desc id="desc">A dark abandoned mall corridor with broken signs and a flickering generator.</desc>
+  <rect width="900" height="700" fill="#121613"/>
+  <path d="M90 130h720v460H90z" fill="#1d241f" stroke="#3b463e" stroke-width="10"/>
+  <path d="M170 210h190v250H170zM540 210h190v250H540z" fill="#111611" stroke="#3b463e" stroke-width="8"/>
+  <path d="M385 170h130v420H385z" fill="#242d25"/>
+  <path d="M420 220h60v350h-60z" fill="#101410"/>
+  <path d="M0 620h900v80H0z" fill="#0d100e"/>
+  <path d="M90 590h720L650 460H250z" fill="#2a322a"/>
+  <g fill="#d7ef77">
+    <path d="M205 245h110v28H205zM575 245h120v28H575z"/>
+    <circle cx="450" cy="118" r="34"/>
+  </g>
+  <path d="M450 160v80" stroke="#d7ef77" stroke-width="7" stroke-linecap="round" opacity=".7"/>
+  <g stroke="#70d56f" stroke-width="10" stroke-linecap="round" opacity=".65">
+    <path d="M240 535l-44 54M662 526l66 58M344 538l-15 62"/>
+  </g>
+  <g fill="#87a36c" stroke="#101410" stroke-width="7">
+    <circle cx="735" cy="520" r="25"/>
+    <path d="M718 548h44l18 54h-78z"/>
+  </g>
+</svg>

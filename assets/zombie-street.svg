@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 700" role="img" aria-labelledby="title desc">
+  <title id="title">Zombie filled street</title>
+  <desc id="desc">A ruined street with shambling zombies under green emergency light.</desc>
+  <defs>
+    <linearGradient id="sky" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0" stop-color="#273325"/>
+      <stop offset="1" stop-color="#0f1411"/>
+    </linearGradient>
+    <radialGradient id="light" cx="38%" cy="22%" r="62%">
+      <stop offset="0" stop-color="#d7ef77" stop-opacity=".45"/>
+      <stop offset=".55" stop-color="#70d56f" stop-opacity=".12"/>
+      <stop offset="1" stop-color="#000" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="900" height="700" fill="url(#sky)"/>
+  <rect width="900" height="700" fill="url(#light)"/>
+  <path d="M0 520h900v180H0z" fill="#171b17"/>
+  <path d="M90 110h170v390H90zM645 80h180v420H645z" fill="#202720"/>
+  <path d="M280 170h250v330H280z" fill="#151b17"/>
+  <g fill="#394333">
+    <path d="M120 150h42v54h-42zM185 150h42v54h-42zM675 130h48v62h-48zM748 130h48v62h-48zM330 215h52v58h-52zM420 215h52v58h-52z"/>
+  </g>
+  <path d="M65 570c125-58 234-78 371-52 122 23 250 12 399-45" fill="none" stroke="#2c332b" stroke-width="42"/>
+  <g fill="#87a36c" stroke="#101410" stroke-width="8" stroke-linecap="round">
+    <path d="M220 432c-28 18-42 55-28 90l16 42h58l10-48c9-42-18-86-56-84z"/>
+    <circle cx="228" cy="392" r="38"/>
+    <path d="M180 477l-48 35M263 475l46 42M206 563l-20 71M252 563l31 70"/>
+    <path d="M600 438c-34 22-47 60-31 100l13 31h65l7-49c7-48-15-82-54-82z"/>
+    <circle cx="607" cy="397" r="36"/>
+    <path d="M561 479l-51 16M648 473l47 33M587 569l-26 65M635 569l25 66"/>
+    <path d="M430 455c-25 16-34 48-22 78l14 36h48l10-38c10-40-16-78-50-76z"/>
+    <circle cx="436" cy="421" r="29"/>
+    <path d="M407 493l-43 28M467 493l40 26"/>
+  </g>
+  <g fill="#d7ef77">
+    <circle cx="214" cy="389" r="5"/><circle cx="240" cy="388" r="5"/>
+    <circle cx="594" cy="394" r="5"/><circle cx="620" cy="394" r="5"/>
+    <circle cx="425" cy="418" r="4"/><circle cx="445" cy="418" r="4"/>
+  </g>
+  <path d="M0 650h900" stroke="#48503f" stroke-width="3" stroke-dasharray="28 22"/>
+</svg>

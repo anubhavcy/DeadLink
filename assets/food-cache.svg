@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 700" role="img" aria-labelledby="title desc">
+  <title id="title">Food cache</title>
+  <desc id="desc">A pile of cans and supplies under a flashlight in an abandoned shop.</desc>
+  <defs>
+    <radialGradient id="beam" cx="50%" cy="32%" r="56%">
+      <stop offset="0" stop-color="#fff0a0" stop-opacity=".8"/>
+      <stop offset=".55" stop-color="#d7ef77" stop-opacity=".22"/>
+      <stop offset="1" stop-color="#111611" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="900" height="700" fill="#151915"/>
+  <rect width="900" height="700" fill="url(#beam)"/>
+  <path d="M70 510h760v120H70z" fill="#252b23"/>
+  <path d="M0 620h900v80H0z" fill="#101410"/>
+  <g stroke="#111611" stroke-width="7">
+    <g fill="#b9b6aa">
+      <rect x="225" y="315" width="96" height="155" rx="16"/>
+      <ellipse cx="273" cy="315" rx="48" ry="15"/>
+      <ellipse cx="273" cy="470" rx="48" ry="15"/>
+    </g>
+    <g fill="#d7ef77">
+      <rect x="365" y="270" width="112" height="200" rx="18"/>
+      <ellipse cx="421" cy="270" rx="56" ry="16"/>
+      <ellipse cx="421" cy="470" rx="56" ry="16"/>
+    </g>
+    <g fill="#ef6666">
+      <rect x="530" y="335" width="96" height="135" rx="16"/>
+      <ellipse cx="578" cy="335" rx="48" ry="15"/>
+      <ellipse cx="578" cy="470" rx="48" ry="15"/>
+    </g>
+    <path d="M170 472h560v58H170z" fill="#394333"/>
+    <path d="M244 386h58M390 372h62M550 400h56" stroke="#111611" stroke-width="10" stroke-linecap="round"/>
+  </g>
+  <path d="M615 232l94-34 48 132-94 34z" fill="#463f33" stroke="#111611" stroke-width="8"/>
+  <path d="M641 258l54-20M655 296l54-20" stroke="#d7ef77" stroke-width="7" stroke-linecap="round"/>
+</svg>

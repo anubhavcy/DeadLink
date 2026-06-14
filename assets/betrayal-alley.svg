@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 700" role="img" aria-labelledby="title desc">
+  <title id="title">Betrayal alley</title>
+  <desc id="desc">Two survivors stand in a narrow alley, one hiding a knife behind their back.</desc>
+  <defs>
+    <linearGradient id="wall" x1="0" x2="1">
+      <stop offset="0" stop-color="#151915"/>
+      <stop offset=".5" stop-color="#30382f"/>
+      <stop offset="1" stop-color="#151915"/>
+    </linearGradient>
+  </defs>
+  <rect width="900" height="700" fill="url(#wall)"/>
+  <path d="M0 570h900v130H0z" fill="#101410"/>
+  <path d="M315 100h270l90 470H225z" fill="#1d241f"/>
+  <path d="M390 80h120v490H390z" fill="#252e27"/>
+  <g fill="#d7ef77" opacity=".7">
+    <circle cx="450" cy="135" r="28"/>
+    <path d="M436 164h28v210h-28z"/>
+  </g>
+  <g stroke="#101410" stroke-width="9" stroke-linecap="round" stroke-linejoin="round">
+    <g fill="#7f9b6d">
+      <circle cx="330" cy="375" r="38"/>
+      <path d="M288 425h85l22 125H270z"/>
+      <path d="M285 455l-55 42M378 455l55 42"/>
+    </g>
+    <g fill="#91a878">
+      <circle cx="570" cy="375" r="38"/>
+      <path d="M528 425h85l22 125H510z"/>
+      <path d="M523 455l-45 20M617 455l35 64"/>
+    </g>
+    <path d="M496 480l70-22" stroke="#ef6666"/>
+  </g>
+  <path d="M220 585c120-40 280-44 460 0" fill="none" stroke="#394333" stroke-width="28" stroke-linecap="round"/>
+</svg>

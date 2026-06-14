@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 700" role="img" aria-labelledby="title desc">
+  <title id="title">Safehouse</title>
+  <desc id="desc">A barricaded safehouse glowing under moonlight at the edge of a ruined city.</desc>
+  <rect width="900" height="700" fill="#111611"/>
+  <circle cx="690" cy="118" r="66" fill="#d7ef77" opacity=".75"/>
+  <path d="M0 560h900v140H0z" fill="#101410"/>
+  <path d="M180 315l270-180 270 180v250H180z" fill="#283028" stroke="#3b463e" stroke-width="10"/>
+  <path d="M130 340l320-220 320 220" fill="none" stroke="#171b17" stroke-width="35" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M390 405h120v160H390z" fill="#101410" stroke="#3b463e" stroke-width="8"/>
+  <path d="M235 360h95v80h-95zM570 360h95v80h-95z" fill="#d7ef77" opacity=".7" stroke="#3b463e" stroke-width="8"/>
+  <g stroke="#8c5f44" stroke-width="22" stroke-linecap="round">
+    <path d="M130 532h640M145 490h610M165 450h570"/>
+  </g>
+  <g fill="#242d25">
+    <path d="M60 220h90v340H60zM765 190h80v370h-80z"/>
+    <path d="M90 160h30v70H90zM795 130h25v70h-25z"/>
+  </g>
+  <path d="M450 462h1" stroke="#d7ef77" stroke-width="12" stroke-linecap="round"/>
+</svg>
