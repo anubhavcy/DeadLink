@@ -2,7 +2,7 @@
 export const firebaseConfig = {
   apiKey: "AIzaSyAT-qbN8Y7ViroKuCiaHdXdGtoTZbdZ-Mk",
   authDomain: "dead-link-e7bf4.firebaseapp.com",
-  databaseURL:"https://console.firebase.google.com",
+  databaseURL:"https://dead-link-e7bf4-default-rtdb.firebaseio.com",
   projectId: "dead-link-e7bf4",
   storageBucket: "dead-link-e7bf4.firebasestorage.app",
   messagingSenderId: "390294139024",
