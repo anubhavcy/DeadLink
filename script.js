@@ -1,3 +1,14 @@
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+import {
+  getDatabase,
+  ref,
+  set,
+  onValue,
+  runTransaction,
+  serverTimestamp
+} from "https://www.gstatic.com/firebasejs/10.12.5/firebase-database.js";
+import { firebaseConfig } from "./firebase-config.js";
+
 const els = {
   setupScreen: document.querySelector("#setupScreen"),
   gameScreen: document.querySelector("#gameScreen"),
@@ -6,12 +17,16 @@ const els = {
   hostName: document.querySelector("#hostName"),
   guestName: document.querySelector("#guestName"),
   shareBox: document.querySelector("#shareBox"),
+  shareText: document.querySelector("#shareText"),
+  waitingLine: document.querySelector("#waitingLine"),
   shareLink: document.querySelector("#shareLink"),
   copyInvite: document.querySelector("#copyInvite"),
   copySave: document.querySelector("#copySave"),
   newGame: document.querySelector("#newGame"),
+  connectionStatus: document.querySelector("#connectionStatus"),
   dayLabel: document.querySelector("#dayLabel"),
   turnLabel: document.querySelector("#turnLabel"),
+  timerLine: document.querySelector("#timerLine"),
   survivors: document.querySelector("#survivors"),
   scenarioTag: document.querySelector("#scenarioTag"),
   scenarioTitle: document.querySelector("#scenarioTitle"),
@@ -22,7 +37,8 @@ const els = {
 };
 
 const FINAL_TURN = 18;
-const STORAGE_PREFIX = "dead-link-save-";
+const TURN_SECONDS = 25;
+const PLAYER_KEY = "dead-link-player-id";
 
 const imageByType = {
   fight: "assets/zombie-street.svg",
@@ -37,76 +53,99 @@ const imageByType = {
 const scenarioDeck = [
   {
     type: "fight",
-    title: "A horde blocks the pharmacy",
-    text: "{player} hears medicine rattling behind a shutter, but the street is packed with infected.",
+    title: "Zombie conga line at the snack shop",
+    text: "{player} sees chips, soda, and six zombies doing the slowest group dance ever.",
     choices: [
-      { label: "Fight through", detail: "High risk, possible supplies", kind: "fight" },
-      { label: "Sneak around back", detail: "Safer, but slow and uncertain", kind: "sneak" },
-      { label: "Use the other survivor as a distraction", detail: "Betrayal hurts them if it works", kind: "bait" }
+      { label: "Bonk and run", detail: "Fight for snacks and maybe a useful stick.", kind: "fight" },
+      { label: "Tiptoe like a cartoon thief", detail: "Safer, unless your shoe squeaks.", kind: "sneak" },
+      { label: "Yell your friend's name", detail: "Mean, funny, and very risky for them.", kind: "bait" }
     ]
   },
   {
     type: "food",
-    title: "Mystery cans in a flooded shop",
-    text: "{player} finds unlabelled food tins. Some smell fine. One smells like a dare.",
+    title: "Suspicious soup jackpot",
+    text: "{player} finds cans labelled only with a smiley face. That is normal, probably.",
     choices: [
-      { label: "Eat now", detail: "Could heal or poison you", kind: "eat" },
-      { label: "Share a careful meal", detail: "Lower risk, both affected", kind: "shareFood" },
-      { label: "Save it for leverage", detail: "Gain supplies and trust nobody", kind: "stash" }
+      { label: "Eat the smile soup", detail: "Could heal you. Could make you regret soup.", kind: "eat" },
+      { label: "Share tiny bites", detail: "Both test it like brave little food scientists.", kind: "shareFood" },
+      { label: "Hide it for later", detail: "No tummy risk, but your friend may judge you.", kind: "stash" }
     ]
   },
   {
     type: "search",
-    title: "A mall generator coughs to life",
-    text: "Lights flicker in the mall. {player} can search quickly before the noise attracts trouble.",
+    title: "Mall trip, apocalypse edition",
+    text: "The mall is open forever now. {player} gets one quick stop before the zombies notice the vibes.",
     choices: [
-      { label: "Raid the sporting goods store", detail: "Chance for a weapon", kind: "weapon" },
-      { label: "Check the clinic", detail: "Chance for medicine", kind: "medicine" },
-      { label: "Take only what fits", detail: "Reliable supplies", kind: "supplies" }
+      { label: "Sports store", detail: "Maybe get a weapon. Maybe get a football helmet.", kind: "weapon" },
+      { label: "Tiny clinic", detail: "Bandages, pills, and one creepy poster.", kind: "medicine" },
+      { label: "Grab random stuff", detail: "Safe choice. Boring but useful.", kind: "supplies" }
     ]
   },
   {
     type: "betray",
-    title: "Only one bike has air in the tires",
-    text: "{player} spots a working bicycle beside the wreckage. The other survivor has not noticed yet.",
+    title: "One bicycle. Two survivors. Awkward.",
+    text: "{player} spots a bike with one good wheel. It squeaks, but freedom also squeaks sometimes.",
     choices: [
-      { label: "Escape alone", detail: "Big advantage, brutal betrayal", kind: "escapeAlone" },
-      { label: "Call it out", detail: "Gain trust and a small heal", kind: "honest" },
-      { label: "Sabotage it quietly", detail: "Nobody gets it, but you may gain time", kind: "sabotage" }
+      { label: "Ride away alone", detail: "Fast, selfish, dramatic.", kind: "escapeAlone" },
+      { label: "Call dibs together", detail: "Teamwork. Annoyingly healthy.", kind: "honest" },
+      { label: "Pop the tire", detail: "If you cannot have it, nobody has it.", kind: "sabotage" }
     ]
   },
   {
     type: "rest",
-    title: "An apartment with a bolted door",
-    text: "For once, the hallway is quiet. {player} can use the room before night falls.",
+    title: "A couch that smells only slightly haunted",
+    text: "{player} finds a room with a locked door and a couch that has seen things.",
     choices: [
-      { label: "Sleep deeply", detail: "Heal, but risk ambush", kind: "sleep" },
-      { label: "Patch wounds", detail: "Reliable healing", kind: "patch" },
-      { label: "Keep watch for both", detail: "Trust rises, small fatigue", kind: "watch" }
+      { label: "Power nap", detail: "Heal a lot, unless the couch bites first.", kind: "sleep" },
+      { label: "Patch yourself up", detail: "Good healing, costs supplies.", kind: "patch" },
+      { label: "Keep watch", detail: "You get tired, your friend gets safer.", kind: "watch" }
     ]
   },
   {
     type: "trap",
-    title: "A radio repeats a rescue signal",
-    text: "The broadcast says evacuation leaves at sunset. {player} sees footprints leading into the station.",
+    title: "Radio says free rescue",
+    text: "A radio promises rescue at sunset. {player} knows free things are often traps with better marketing.",
     choices: [
-      { label: "Follow the signal", detail: "Could be rescue or raiders", kind: "signal" },
-      { label: "Set a counter-trap", detail: "Risk supplies for safety", kind: "counterTrap" },
-      { label: "Send the other survivor first", detail: "A very ugly test", kind: "sendOther" }
+      { label: "Follow the signal", detail: "Could be help. Could be a spicy mistake.", kind: "signal" },
+      { label: "Set your own trap", detail: "Spend supplies to outsmart trouble.", kind: "counterTrap" },
+      { label: "Send friend first", detail: "A classic friendship speedrun.", kind: "sendOther" }
     ]
   }
 ];
 
+let app = null;
+let db = null;
+let roomId = null;
+let playerId = localStorage.getItem(PLAYER_KEY) || crypto.randomUUID();
+let playerIndex = null;
 let state = null;
-let currentScenario = null;
+let roomUnsubscribe = null;
+let timerInterval = null;
+let lastAutoTurn = -1;
 
-function makeSeed() {
-  return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+localStorage.setItem(PLAYER_KEY, playerId);
+
+function firebaseReady() {
+  return Boolean(firebaseConfig.apiKey && firebaseConfig.databaseURL && firebaseConfig.projectId);
+}
+
+function showNotice(message, isError = false) {
+  els.connectionStatus.textContent = message;
+  els.connectionStatus.classList.remove("hidden");
+  els.connectionStatus.classList.toggle("error", isError);
 }
 
 function cleanName(name, fallback) {
   const cleaned = name.trim().replace(/\s+/g, " ").slice(0, 18);
   return cleaned || fallback;
+}
+
+function makeRoomId() {
+  return Math.random().toString(36).slice(2, 8).toUpperCase();
+}
+
+function makeSeed() {
+  return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
 function hashString(value) {
@@ -123,41 +162,22 @@ function randomFor(...parts) {
   x ^= x << 13;
   x ^= x >>> 17;
   x ^= x << 5;
-  return ((x >>> 0) / 4294967296);
+  return (x >>> 0) / 4294967296;
 }
 
 function clamp(value, min = 0, max = 100) {
   return Math.max(min, Math.min(max, value));
 }
 
-function encodeState(save) {
-  const json = JSON.stringify(save);
-  return btoa(unescape(encodeURIComponent(json))).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+function roomRef(id = roomId) {
+  return ref(db, `rooms/${id}`);
 }
 
-function decodeState(value) {
-  try {
-    const padded = value.replace(/-/g, "+").replace(/_/g, "/") + "===".slice((value.length + 3) % 4);
-    return JSON.parse(decodeURIComponent(escape(atob(padded))));
-  } catch {
-    return null;
-  }
-}
-
-function buildInviteUrl(seed, host) {
+function buildRoomLink(id = roomId) {
   const url = new URL(window.location.href);
   url.search = "";
   url.hash = "";
-  url.searchParams.set("seed", seed);
-  url.searchParams.set("host", host);
-  return url.toString();
-}
-
-function buildSaveUrl() {
-  const url = new URL(window.location.href);
-  url.search = "";
-  url.hash = "";
-  url.searchParams.set("state", encodeState(state));
+  url.searchParams.set("room", id);
   return url.toString();
 }
 
@@ -174,50 +194,126 @@ async function copyText(text, button) {
   }
 }
 
-function saveLocal() {
-  if (!state) return;
-  localStorage.setItem(STORAGE_PREFIX + state.seed, JSON.stringify(state));
-  history.replaceState(null, "", buildSaveUrl());
-}
-
-function loadFromUrl() {
-  const params = new URLSearchParams(window.location.search);
-  const encoded = params.get("state");
-  if (encoded) {
-    const loaded = decodeState(encoded);
-    if (loaded && loaded.players && loaded.players.length === 2) return loaded;
-  }
-
-  const seed = params.get("seed");
-  const host = params.get("host");
-  if (seed && host) {
-    const local = localStorage.getItem(STORAGE_PREFIX + seed);
-    if (local) {
-      try {
-        const loaded = JSON.parse(local);
-        if (loaded.players && loaded.players.length === 2) return loaded;
-      } catch {
-        localStorage.removeItem(STORAGE_PREFIX + seed);
-      }
-    }
-    return { pendingSeed: seed, pendingHost: host };
-  }
-  return null;
-}
-
-function createGame(host, guest, seed) {
+function createPlayer(name, role) {
   return {
-    seed,
+    id: playerId,
+    name,
+    role,
+    health: 100,
+    supplies: 1,
+    weapon: 0,
+    trust: 55,
+    betrayals: 0
+  };
+}
+
+function createRoomState(hostName) {
+  return {
+    seed: makeSeed(),
+    status: "waiting",
     turn: 0,
     maxTurns: FINAL_TURN,
     over: false,
     winner: null,
-    players: [
-      { name: host, health: 100, supplies: 1, weapon: 0, trust: 55, betrayals: 0 },
-      { name: guest, health: 100, supplies: 1, weapon: 0, trust: 55, betrayals: 0 }
-    ],
-    log: [`${host} and ${guest} enter the dead city together. For now.`]
+    turnStartedAt: Date.now(),
+    updatedAt: serverTimestamp(),
+    players: [createPlayer(hostName, "host")],
+    log: [`${hostName} made a room and is pretending not to be scared.`]
   };
+}
+
+function showHostWaiting(id) {
+  els.shareText.textContent = "Send this link to player 2:";
+  els.shareLink.value = buildRoomLink(id);
+  els.shareBox.classList.remove("hidden");
+  els.waitingLine.textContent = "Waiting for player 2 to join...";
+  copyText(els.shareLink.value, els.copyInvite);
+}
+
+function showJoin(id) {
+  els.hostForm.classList.add("hidden");
+  els.shareBox.classList.add("hidden");
+  els.joinForm.classList.remove("hidden");
+  document.querySelector(".intro").textContent = `Room ${id} is open. Add your name and jump in before the zombies get bored.`;
+  els.guestName.focus();
+}
+
+function subscribeToRoom(id) {
+  if (roomUnsubscribe) roomUnsubscribe();
+  roomUnsubscribe = onValue(roomRef(id), snapshot => {
+    const next = snapshot.val();
+    if (!next) {
+      showNotice("This room does not exist anymore. Make a fresh room.", true);
+      return;
+    }
+    state = next;
+    playerIndex = state.players?.findIndex(player => player.id === playerId) ?? -1;
+
+    if (state.status === "waiting") {
+      els.setupScreen.classList.remove("hidden");
+      els.gameScreen.classList.add("hidden");
+      if (playerIndex === 0) {
+        els.hostForm.classList.add("hidden");
+        showHostWaiting(id);
+      }
+      return;
+    }
+
+    renderGame();
+  });
+}
+
+async function hostGame(event) {
+  event.preventDefault();
+  if (!firebaseReady()) {
+    showNotice("Add your Firebase details in firebase-config.js first. Then rooms will work online.", true);
+    return;
+  }
+  const hostName = cleanName(els.hostName.value, "Host");
+  roomId = makeRoomId();
+  playerIndex = 0;
+  await set(roomRef(roomId), createRoomState(hostName));
+  history.replaceState(null, "", buildRoomLink(roomId));
+  subscribeToRoom(roomId);
+  showHostWaiting(roomId);
+}
+
+async function joinGame(event) {
+  event.preventDefault();
+  const guestName = cleanName(els.guestName.value, "Player 2");
+  const joinId = els.joinForm.dataset.room;
+  let joined = false;
+  let reason = "Room is full or already started.";
+
+  await runTransaction(roomRef(joinId), room => {
+    if (!room) {
+      reason = "That room does not exist.";
+      return;
+    }
+    if (room.players?.some(player => player.id === playerId)) {
+      joined = true;
+      return room;
+    }
+    if (room.status !== "waiting" || (room.players?.length ?? 0) >= 2) {
+      return;
+    }
+    room.players = [...room.players, createPlayer(guestName, "guest")];
+    room.status = "playing";
+    room.turn = 0;
+    room.turnStartedAt = Date.now();
+    room.updatedAt = serverTimestamp();
+    room.log = [...(room.log || []), `${guestName} joined. The zombies politely waited for both players.`];
+    joined = true;
+    return room;
+  });
+
+  if (!joined) {
+    showNotice(reason, true);
+    return;
+  }
+
+  roomId = joinId;
+  subscribeToRoom(roomId);
 }
 
 function activeIndex() {
@@ -228,45 +324,25 @@ function otherIndex() {
   return activeIndex() === 0 ? 1 : 0;
 }
 
-function getScenario() {
-  if (state.over) {
+function isMyTurn() {
+  return !state.over && playerIndex === activeIndex();
+}
+
+function getScenario(room = state) {
+  if (room.over) {
     return {
       type: "finale",
-      title: "The last survivor",
-      text: "The road is silent now. The apocalypse keeps score in scars.",
+      title: "Last survivor gets bragging rights",
+      text: "The road is quiet. The zombies are tired. Someone gets to say, 'I told you so.'",
       choices: []
     };
   }
-  const index = Math.floor(randomFor(state.seed, "scenario", state.turn) * scenarioDeck.length);
+  const index = Math.floor(randomFor(room.seed, "scenario", room.turn) * scenarioDeck.length);
   return scenarioDeck[index];
 }
 
-function playerLabel(index) {
-  return index === activeIndex() && !state.over ? "Choosing" : "Waiting";
-}
-
-function renderPlayers() {
-  els.survivors.innerHTML = "";
-  state.players.forEach((player, index) => {
-    const card = document.createElement("article");
-    card.className = `player-card ${player.health <= 0 ? "dead" : ""} ${state.winner === index ? "winner" : ""}`;
-    const healthColor = player.health > 55 ? "var(--green)" : player.health > 25 ? "var(--yellow)" : "var(--red)";
-    card.innerHTML = `
-      <div class="player-head">
-        <h3 class="player-name">${escapeHtml(player.name)}</h3>
-        <span class="badge">${state.over ? (state.winner === index ? "Winner" : "Lost") : playerLabel(index)}</span>
-      </div>
-      <div class="stat"><span>Health</span><div class="bar"><span style="width:${player.health}%;background:${healthColor}"></span></div><strong>${player.health}</strong></div>
-      <div class="stat"><span>Supplies</span><div class="bar"><span style="width:${clamp(player.supplies * 18)}%;background:var(--yellow)"></span></div><strong>${player.supplies}</strong></div>
-      <div class="stat"><span>Weapon</span><div class="bar"><span style="width:${clamp(player.weapon * 25)}%"></span></div><strong>${player.weapon}</strong></div>
-      <div class="stat"><span>Trust</span><div class="bar"><span style="width:${player.trust}%;background:var(--accent)"></span></div><strong>${player.trust}</strong></div>
-    `;
-    els.survivors.appendChild(card);
-  });
-}
-
 function escapeHtml(value) {
-  return value.replace(/[&<>"']/g, char => ({
+  return String(value).replace(/[&<>"']/g, char => ({
     "&": "&amp;",
     "<": "&lt;",
     ">": "&gt;",
@@ -275,9 +351,35 @@ function escapeHtml(value) {
   })[char]);
 }
 
+function playerLabel(index) {
+  if (state.over) return state.winner === index ? "Winner" : "Lost";
+  if (index === activeIndex()) return "Choosing";
+  return "Waiting";
+}
+
+function renderPlayers() {
+  els.survivors.innerHTML = "";
+  state.players.forEach((player, index) => {
+    const card = document.createElement("article");
+    card.className = `player-card pop-in ${player.health <= 0 ? "dead" : ""} ${state.winner === index ? "winner" : ""} ${index === activeIndex() && !state.over ? "active-player" : ""}`;
+    const healthColor = player.health > 55 ? "var(--green)" : player.health > 25 ? "var(--yellow)" : "var(--red)";
+    card.innerHTML = `
+      <div class="player-head">
+        <h3 class="player-name">${escapeHtml(player.name)}</h3>
+        <span class="badge">${playerLabel(index)}</span>
+      </div>
+      <div class="stat"><span>Health</span><div class="bar"><span style="width:${player.health}%;background:${healthColor}"></span></div><strong>${player.health}</strong></div>
+      <div class="stat"><span>Snacks</span><div class="bar"><span style="width:${clamp(player.supplies * 18)}%;background:var(--yellow)"></span></div><strong>${player.supplies}</strong></div>
+      <div class="stat"><span>Bonk</span><div class="bar"><span style="width:${clamp(player.weapon * 25)}%"></span></div><strong>${player.weapon}</strong></div>
+      <div class="stat"><span>Trust</span><div class="bar"><span style="width:${player.trust}%;background:var(--accent)"></span></div><strong>${player.trust}</strong></div>
+    `;
+    els.survivors.appendChild(card);
+  });
+}
+
 function renderLog() {
   els.log.innerHTML = "";
-  state.log.slice(-9).reverse().forEach(item => {
+  (state.log || []).slice(-9).reverse().forEach(item => {
     const li = document.createElement("li");
     li.textContent = item;
     els.log.appendChild(li);
@@ -285,33 +387,42 @@ function renderLog() {
 }
 
 function renderScenario() {
-  currentScenario = getScenario();
-  const player = state.players[activeIndex()];
+  const scenario = getScenario();
+  const player = state.players[activeIndex()] || state.players[0];
   const day = Math.floor(state.turn / 2) + 1;
   els.dayLabel.textContent = Math.min(day, Math.ceil(state.maxTurns / 2));
-  els.turnLabel.textContent = state.over ? "Game over" : `${player.name}'s choice`;
-  els.scenarioTag.textContent = state.over ? "Finale" : `${currentScenario.type} scenario`;
-  els.scenarioTitle.textContent = currentScenario.title;
-  els.scenarioText.textContent = currentScenario.text.replace("{player}", player.name);
-  els.sceneImage.src = imageByType[currentScenario.type] || imageByType.search;
+  els.turnLabel.textContent = state.over ? "Game over" : isMyTurn() ? "Your choice!" : `${player.name} is choosing`;
+  els.scenarioTag.textContent = state.over ? "Finale" : `${scenario.type} trouble`;
+  els.scenarioTitle.textContent = scenario.title;
+  els.scenarioText.textContent = scenario.text.replace("{player}", player.name);
+  els.sceneImage.src = imageByType[scenario.type] || imageByType.search;
   els.choices.innerHTML = "";
 
   if (state.over) {
     const winner = state.players[state.winner];
     const p = document.createElement("p");
+    p.className = "final-text";
     p.textContent = winner
-      ? `${winner.name} survives with ${winner.health} health, ${winner.supplies} supplies, and ${winner.betrayals} betrayal${winner.betrayals === 1 ? "" : "s"}.`
-      : "No one made it out. The city wins.";
+      ? `${winner.name} wins with ${winner.health} health, ${winner.supplies} snacks, and ${winner.betrayals} betrayal${winner.betrayals === 1 ? "" : "s"}.`
+      : "Nobody made it out. The zombies win and probably start a bowling league.";
     els.choices.appendChild(p);
     return;
   }
 
-  currentScenario.choices.forEach(choice => {
+  if (!isMyTurn()) {
+    const wait = document.createElement("p");
+    wait.className = "waiting-card";
+    wait.textContent = `Waiting for ${player.name}. You cannot choose on their turn.`;
+    els.choices.appendChild(wait);
+  }
+
+  scenario.choices.forEach(choice => {
     const button = document.createElement("button");
     button.className = "choice-button";
     button.type = "button";
+    button.disabled = !isMyTurn();
     button.innerHTML = `<strong>${escapeHtml(choice.label)}</strong><span>${escapeHtml(choice.detail)}</span>`;
-    button.addEventListener("click", () => choose(choice.kind));
+    button.addEventListener("click", () => choose(choice.kind, false));
     els.choices.appendChild(button);
   });
 }
@@ -322,11 +433,38 @@ function renderGame() {
   renderPlayers();
   renderScenario();
   renderLog();
+  startTimer();
 }
 
-function addLog(message) {
-  state.log.push(message);
-  if (state.log.length > 40) state.log.shift();
+function secondsLeft(room = state) {
+  const elapsed = Math.floor((Date.now() - (room.turnStartedAt || Date.now())) / 1000);
+  return clamp(TURN_SECONDS - elapsed, 0, TURN_SECONDS);
+}
+
+function startTimer() {
+  clearInterval(timerInterval);
+  tickTimer();
+  timerInterval = setInterval(tickTimer, 250);
+}
+
+function tickTimer() {
+  if (!state || state.over || state.status !== "playing") {
+    els.timerLine.textContent = "";
+    return;
+  }
+  const left = secondsLeft();
+  els.timerLine.textContent = `${left}s left${isMyTurn() ? "" : " - waiting"}`;
+  els.timerLine.style.setProperty("--timer", `${(left / TURN_SECONDS) * 100}%`);
+
+  if (left <= 0 && lastAutoTurn !== state.turn) {
+    lastAutoTurn = state.turn;
+    autoChoose();
+  }
+}
+
+function addLog(room, message) {
+  const log = [...(room.log || []), message];
+  return log.slice(-45);
 }
 
 function damage(player, amount) {
@@ -337,31 +475,55 @@ function heal(player, amount) {
   player.health = clamp(player.health + amount);
 }
 
-function choose(kind) {
-  const actor = state.players[activeIndex()];
-  const other = state.players[otherIndex()];
-  const roll = randomFor(state.seed, state.turn, kind);
-  const badRoll = randomFor(state.seed, state.turn, kind, "bad");
+async function autoChoose() {
+  const scenario = getScenario();
+  if (!scenario.choices.length) return;
+  const pick = scenario.choices[Math.floor(randomFor(state.seed, state.turn, "timeout") * scenario.choices.length)];
+  await choose(pick.kind, true);
+}
+
+async function choose(kind, timedOut) {
+  if (!state || state.over) return;
+  await runTransaction(roomRef(), room => {
+    if (!room || room.over || room.status !== "playing") return room;
+    if (!timedOut && room.players?.[room.turn % 2]?.id !== playerId) return room;
+    if (timedOut && secondsLeft(room) > 0) return room;
+
+    applyChoice(room, kind, timedOut);
+    room.updatedAt = serverTimestamp();
+    return room;
+  });
+}
+
+function applyChoice(room, kind, timedOut) {
+  const actorIndex = room.turn % 2;
+  const targetIndex = actorIndex === 0 ? 1 : 0;
+  const actor = room.players[actorIndex];
+  const other = room.players[targetIndex];
+  const roll = randomFor(room.seed, room.turn, kind);
+  const badRoll = randomFor(room.seed, room.turn, kind, "bad");
+  const autoText = timedOut ? " Time ran out, so fate clicked for them." : "";
+  let message = "";
 
   if (kind === "fight") {
-    const hurt = Math.round(18 + badRoll * 22 - actor.weapon * 4);
+    const hurt = Math.round(14 + badRoll * 20 - actor.weapon * 4);
     damage(actor, hurt);
     if (roll > 0.42) {
       actor.supplies += 2;
       actor.weapon += roll > 0.78 ? 1 : 0;
-      addLog(`${actor.name} fought through the horde, lost ${hurt} health, and grabbed supplies.`);
+      message = `${actor.name} bonked through the zombie crowd, lost ${hurt} health, and stole snacks.${autoText}`;
     } else {
-      addLog(`${actor.name} fought hard but got dragged down for ${hurt} health.`);
+      message = `${actor.name} tried to be an action hero and lost ${hurt} health.${autoText}`;
     }
   }
 
   if (kind === "sneak") {
     if (roll > 0.25) {
       actor.supplies += 1;
-      addLog(`${actor.name} slipped past the infected and found a clean bandage.`);
+      message = `${actor.name} tiptoed past the zombies and found emergency biscuits.${autoText}`;
     } else {
       damage(actor, 14);
-      addLog(`${actor.name} stepped on glass and attracted teeth in the dark.`);
+      message = `${actor.name}'s shoe squeaked at the worst possible time.${autoText}`;
     }
   }
 
@@ -372,21 +534,21 @@ function choose(kind) {
     if (roll > 0.36) {
       damage(other, 24);
       actor.supplies += 2;
-      addLog(`${actor.name} used ${other.name} as bait and escaped with loot.`);
+      message = `${actor.name} shouted ${other.name}'s name and ran. Evil? Yes. Useful? Also yes.${autoText}`;
     } else {
       damage(actor, 20);
       damage(other, 10);
-      addLog(`${actor.name}'s betrayal backfired and both survivors paid in blood.`);
+      message = `${actor.name}'s betrayal failed and everyone got bitten by karma.${autoText}`;
     }
   }
 
   if (kind === "eat") {
     if (roll > 0.45) {
       heal(actor, 22);
-      addLog(`${actor.name} ate the mystery food. Somehow, it was good.`);
+      message = `${actor.name} ate the smile soup. Somehow, it slapped.${autoText}`;
     } else {
       damage(actor, 26);
-      addLog(`${actor.name} ate poisoned food and spent the hour shaking.`);
+      message = `${actor.name} learned that mystery soup is mostly mystery.${autoText}`;
     }
   }
 
@@ -396,36 +558,36 @@ function choose(kind) {
       heal(other, 10);
       actor.trust = clamp(actor.trust + 8);
       other.trust = clamp(other.trust + 8);
-      addLog(`${actor.name} shared a careful meal. Both survivors recovered.`);
+      message = `${actor.name} shared food. Cute. Suspiciously cute.${autoText}`;
     } else {
       damage(actor, 12);
       damage(other, 12);
-      addLog(`${actor.name} shared bad food. Nobody is feeling heroic.`);
+      message = `${actor.name} shared bad food. Group stomach disaster unlocked.${autoText}`;
     }
   }
 
   if (kind === "stash") {
     actor.supplies += 2;
     actor.trust = clamp(actor.trust - 8);
-    addLog(`${actor.name} hid the food for later and avoided the stomach lottery.`);
+    message = `${actor.name} hid the soup like a tiny apocalypse rascal. Nobody clapped.${autoText}`;
   }
 
   if (kind === "weapon") {
     actor.weapon += roll > 0.35 ? 1 : 0;
     damage(actor, roll > 0.35 ? 4 : 15);
-    addLog(roll > 0.35 ? `${actor.name} found a solid weapon.` : `${actor.name} found only noise and bruises.`);
+    message = roll > 0.35 ? `${actor.name} found a good bonking tool.${autoText}` : `${actor.name} found a treadmill and emotional damage.${autoText}`;
   }
 
   if (kind === "medicine") {
     heal(actor, roll > 0.25 ? 20 : 6);
     actor.supplies += roll > 0.55 ? 1 : 0;
-    addLog(`${actor.name} raided the clinic and patched what could be patched.`);
+    message = `${actor.name} raided the tiny clinic and felt slightly less doomed.${autoText}`;
   }
 
   if (kind === "supplies") {
     actor.supplies += 1;
     heal(actor, 5);
-    addLog(`${actor.name} kept the search boring, which is a rare kind of genius.`);
+    message = `${actor.name} grabbed batteries, noodles, and one useless celebrity calendar.${autoText}`;
   }
 
   if (kind === "escapeAlone") {
@@ -434,7 +596,7 @@ function choose(kind) {
     other.trust = clamp(other.trust - 45);
     heal(actor, 8);
     damage(other, 18);
-    addLog(`${actor.name} took the bike alone and left ${other.name} exposed.`);
+    message = `${actor.name} rode away alone on the squeaky bike. The drama was loud.${autoText}`;
   }
 
   if (kind === "honest") {
@@ -442,30 +604,30 @@ function choose(kind) {
     other.trust = clamp(other.trust + 14);
     heal(actor, 8);
     heal(other, 5);
-    addLog(`${actor.name} called out the bike. Cooperation bought them another hour.`);
+    message = `${actor.name} chose teamwork. The bike squeaked with approval.${autoText}`;
   }
 
   if (kind === "sabotage") {
     actor.betrayals += 1;
     actor.trust = clamp(actor.trust - 18);
     actor.supplies += roll > 0.5 ? 1 : 0;
-    addLog(`${actor.name} made sure nobody rode away clean.`);
+    message = `${actor.name} popped the tire. Petty points awarded.${autoText}`;
   }
 
   if (kind === "sleep") {
     heal(actor, 25);
     if (roll < 0.32) {
       damage(actor, 18);
-      addLog(`${actor.name} slept deeply, then woke to hands at the door.`);
+      message = `${actor.name} napped well, then woke up to rude zombie knocking.${autoText}`;
     } else {
-      addLog(`${actor.name} slept like the world was not ending and recovered well.`);
+      message = `${actor.name} had a beautiful nap during the end of the world.${autoText}`;
     }
   }
 
   if (kind === "patch") {
     heal(actor, 15);
     actor.supplies = Math.max(0, actor.supplies - 1);
-    addLog(`${actor.name} patched wounds and spent a supply.`);
+    message = `${actor.name} used supplies and patched the leaky human parts.${autoText}`;
   }
 
   if (kind === "watch") {
@@ -473,17 +635,17 @@ function choose(kind) {
     heal(other, 8);
     actor.trust = clamp(actor.trust + 12);
     other.trust = clamp(other.trust + 12);
-    addLog(`${actor.name} kept watch while ${other.name} rested.`);
+    message = `${actor.name} kept watch and only complained a normal amount.${autoText}`;
   }
 
   if (kind === "signal") {
     if (roll > 0.48) {
       actor.supplies += 2;
       heal(actor, 10);
-      addLog(`${actor.name} followed the signal and found a real survivor cache.`);
+      message = `${actor.name} followed the radio and found actual useful stuff. Weird!${autoText}`;
     } else {
       damage(actor, 24);
-      addLog(`${actor.name} followed the signal into a raider trap.`);
+      message = `${actor.name} followed the radio into a very obvious trap.${autoText}`;
     }
   }
 
@@ -491,10 +653,10 @@ function choose(kind) {
     actor.supplies = Math.max(0, actor.supplies - 1);
     if (roll > 0.28) {
       actor.weapon += 1;
-      addLog(`${actor.name} set a counter-trap and stole a weapon from the raiders.`);
+      message = `${actor.name} set a trap and looked clever for once.${autoText}`;
     } else {
       damage(actor, 16);
-      addLog(`${actor.name}'s counter-trap failed loudly.`);
+      message = `${actor.name}'s trap made a loud clank and achieved nothing.${autoText}`;
     }
   }
 
@@ -504,87 +666,58 @@ function choose(kind) {
     other.trust = clamp(other.trust - 30);
     damage(other, roll > 0.5 ? 12 : 28);
     actor.supplies += roll > 0.5 ? 1 : 0;
-    addLog(`${actor.name} sent ${other.name} first. The station answered with violence.`);
+    message = `${actor.name} sent ${other.name} first. Friendship took damage.${autoText}`;
   }
 
-  afterChoice();
-}
-
-function afterChoice() {
-  state.players.forEach(player => {
-    if (player.supplies <= 0 && player.health > 0) {
-      damage(player, 4);
-    }
+  room.players.forEach(player => {
+    if (player.supplies <= 0 && player.health > 0) damage(player, 4);
   });
 
-  const living = state.players.map((player, index) => player.health > 0 ? index : null).filter(index => index !== null);
-  state.turn += 1;
+  room.log = addLog(room, message);
+  room.turn += 1;
+  room.turnStartedAt = Date.now();
 
+  const living = room.players.map((player, index) => player.health > 0 ? index : null).filter(index => index !== null);
   if (living.length <= 1) {
-    state.over = true;
-    state.winner = living[0] ?? null;
-  } else if (state.turn >= state.maxTurns) {
-    state.over = true;
-    const scores = state.players.map(player => player.health * 3 + player.supplies * 8 + player.weapon * 6 + player.trust - player.betrayals * 3);
-    state.winner = scores[0] === scores[1] ? (state.players[0].health >= state.players[1].health ? 0 : 1) : (scores[0] > scores[1] ? 0 : 1);
-    addLog(`${state.players[state.winner].name} reaches the evacuation road first.`);
+    room.over = true;
+    room.status = "over";
+    room.winner = living[0] ?? null;
+  } else if (room.turn >= room.maxTurns) {
+    room.over = true;
+    room.status = "over";
+    const scores = room.players.map(player => player.health * 3 + player.supplies * 8 + player.weapon * 6 + player.trust - player.betrayals * 3);
+    room.winner = scores[0] === scores[1] ? (room.players[0].health >= room.players[1].health ? 0 : 1) : (scores[0] > scores[1] ? 0 : 1);
+    room.log = addLog(room, `${room.players[room.winner].name} reaches the rescue road first and gets unlimited bragging rights.`);
   }
-
-  saveLocal();
-  renderGame();
-}
-
-function showJoin(seed, host) {
-  els.hostForm.classList.add("hidden");
-  els.shareBox.classList.add("hidden");
-  els.joinForm.classList.remove("hidden");
-  els.guestName.focus();
-  els.joinForm.dataset.seed = seed;
-  els.joinForm.dataset.host = host;
-  document.querySelector(".intro").textContent = `${host} invited you into the apocalypse. Enter your survivor name and start the run.`;
 }
 
 function boot() {
-  const loaded = loadFromUrl();
-  if (loaded && loaded.players) {
-    state = loaded;
-    saveLocal();
-    renderGame();
-    return;
+  if (!firebaseReady()) {
+    showNotice("Firebase is not configured yet. Add your project details in firebase-config.js for live two-player rooms.", true);
+  } else {
+    app = initializeApp(firebaseConfig);
+    db = getDatabase(app);
   }
-  if (loaded && loaded.pendingSeed) {
-    showJoin(loaded.pendingSeed, loaded.pendingHost);
+
+  const params = new URLSearchParams(window.location.search);
+  const urlRoom = params.get("room");
+  if (urlRoom && firebaseReady()) {
+    roomId = urlRoom;
+    els.joinForm.dataset.room = urlRoom;
+    showJoin(urlRoom);
+    subscribeToRoom(urlRoom);
   }
 }
 
-els.hostForm.addEventListener("submit", event => {
-  event.preventDefault();
-  const host = cleanName(els.hostName.value, "Host");
-  const seed = makeSeed();
-  const link = buildInviteUrl(seed, host);
-  els.shareLink.value = link;
-  els.shareBox.classList.remove("hidden");
-  copyText(link, els.copyInvite);
-});
-
-els.joinForm.addEventListener("submit", event => {
-  event.preventDefault();
-  const host = cleanName(els.joinForm.dataset.host || "Host", "Host");
-  const guest = cleanName(els.guestName.value, "Receiver");
-  state = createGame(host, guest, els.joinForm.dataset.seed || makeSeed());
-  saveLocal();
-  renderGame();
-});
-
+els.hostForm.addEventListener("submit", hostGame);
+els.joinForm.addEventListener("submit", joinGame);
 els.copyInvite.addEventListener("click", () => copyText(els.shareLink.value, els.copyInvite));
-els.copySave.addEventListener("click", () => copyText(buildSaveUrl(), els.copySave));
+els.copySave.addEventListener("click", () => copyText(buildRoomLink(), els.copySave));
 els.newGame.addEventListener("click", () => {
-  state = null;
   const url = new URL(window.location.href);
   url.search = "";
   url.hash = "";
-  history.replaceState(null, "", url.toString());
-  window.location.reload();
+  window.location.href = url.toString();
 });
 
 boot();
