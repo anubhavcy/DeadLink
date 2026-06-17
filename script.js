@@ -4,8 +4,7 @@ import {
   ref,
   set,
   onValue,
-  runTransaction,
-  serverTimestamp
+  runTransaction
 } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-database.js";
 import { firebaseConfig } from "./firebase-config.js";
 
@@ -45,6 +44,7 @@ const els = {
 };
 
 const PLAYER_KEY = "deadline-player-id";
+const BUILD_VERSION = 3;
 const INTRO_MS = 18000;
 const OUTCOME_MS = 5200;
 
@@ -174,14 +174,14 @@ const events = {
 let app = null;
 let db = null;
 let roomId = null;
-let playerId = localStorage.getItem(PLAYER_KEY) || crypto.randomUUID();
+let playerId = sessionStorage.getItem(PLAYER_KEY) || crypto.randomUUID();
 let playerIndex = -1;
 let state = null;
 let roomUnsubscribe = null;
 let timerInterval = null;
 let lastAutoKey = "";
 
-localStorage.setItem(PLAYER_KEY, playerId);
+sessionStorage.setItem(PLAYER_KEY, playerId);
 
 function firebaseReady() {
   return Boolean(firebaseConfig.apiKey && firebaseConfig.databaseURL && firebaseConfig.projectId);
@@ -242,6 +242,7 @@ function createPlayer(name, role) {
 function createRoomState(hostName) {
   return {
     game: "deadline-arc1",
+    buildVersion: BUILD_VERSION,
     status: "waiting",
     eventId: "intro",
     danger: 0,
@@ -252,7 +253,7 @@ function createRoomState(hostName) {
     chat: [],
     log: [`${hostName} started a sleepover room.`],
     players: [createPlayer(hostName, "host")],
-    updatedAt: serverTimestamp()
+    updatedAt: Date.now()
   };
 }
 
@@ -286,6 +287,17 @@ function subscribeToRoom(id) {
     }
     state = next;
     playerIndex = state.players?.findIndex(player => player.id === playerId) ?? -1;
+
+    if (state.game !== "deadline-arc1" || state.buildVersion !== BUILD_VERSION) {
+      els.setupScreen.classList.remove("hidden");
+      els.introScreen.classList.add("hidden");
+      els.gameScreen.classList.add("hidden");
+      els.hostForm.classList.add("hidden");
+      els.joinForm.classList.add("hidden");
+      els.shareBox.classList.add("hidden");
+      showNotice("This room was made with an older build. Start a new room.", true);
+      return;
+    }
 
     if (playerIndex < 0 && state.status !== "waiting") {
       els.setupScreen.classList.remove("hidden");
@@ -371,7 +383,7 @@ async function joinGame(event) {
       room.status = "intro";
       room.eventId = "intro";
       room.eventStartedAt = Date.now();
-      room.updatedAt = serverTimestamp();
+      room.updatedAt = Date.now();
       room.log = [...(room.log || []), `${guestName} joined. The room locked at two players.`];
       joined = true;
       return room;
@@ -563,7 +575,7 @@ async function submitChoice(choiceId) {
       if (!room.players?.some(player => player.id === playerId)) return room;
       room.choices = room.choices || {};
       room.choices[playerId] = choiceId;
-      room.updatedAt = serverTimestamp();
+      room.updatedAt = Date.now();
       tryResolveEvent(room);
       return room;
     });
@@ -579,7 +591,7 @@ async function sendChat(text) {
     if (!room || room.status !== "event") return room;
     if (!room.players?.some(player => player.id === playerId)) return room;
     room.chat = [...(room.chat || []), { id: playerId, name: me.name, text, at: Date.now() }].slice(-10);
-    room.updatedAt = serverTimestamp();
+    room.updatedAt = Date.now();
     return room;
   });
 }
@@ -624,7 +636,7 @@ function resolveIfReadyFromSnapshot() {
     if (roomPicks.length < ids.length) return room;
     if (roomEvent.consensus && new Set(roomPicks).size > 1) return room;
     tryResolveEvent(room);
-    room.updatedAt = serverTimestamp();
+    room.updatedAt = Date.now();
     return room;
   }).catch(error => {
     showNotice(`Room sync failed: ${error.message}`, true);
@@ -769,17 +781,17 @@ function tickTimer() {
       room.status = "event";
       room.eventId = "firstChoice";
       room.eventStartedAt = Date.now();
-      room.updatedAt = serverTimestamp();
+      room.updatedAt = Date.now();
       return room;
     }
     if (room.status === "outcome") {
       advanceOutcome(room);
-      room.updatedAt = serverTimestamp();
+      room.updatedAt = Date.now();
       return room;
     }
-    if (room.status === "event") {
+    if (room.status === "event" && currentEvent(room).auto) {
       tryResolveEvent(room, true);
-      room.updatedAt = serverTimestamp();
+      room.updatedAt = Date.now();
       return room;
     }
     return room;
