@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 700" role="img" aria-labelledby="title desc">
+  <title id="title">Sleepover house during emergency alert</title>
+  <desc id="desc">A dark house interior with a black television, pizza, and red emergency light at the window.</desc>
+  <defs>
+    <radialGradient id="alert" cx="78%" cy="24%" r="48%">
+      <stop offset="0" stop-color="#ef5d5d" stop-opacity=".55"/>
+      <stop offset=".55" stop-color="#ef5d5d" stop-opacity=".12"/>
+      <stop offset="1" stop-color="#000" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="room" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0" stop-color="#19211f"/>
+      <stop offset="1" stop-color="#070908"/>
+    </linearGradient>
+  </defs>
+  <rect width="900" height="700" fill="url(#room)"/>
+  <rect width="900" height="700" fill="url(#alert)"/>
+  <path d="M80 95h740v460H80z" fill="#111716" stroke="#2b3935" stroke-width="10"/>
+  <path d="M120 135h260v170H120z" fill="#030404" stroke="#2b3935" stroke-width="8"/>
+  <path d="M145 168h210v26H145z" fill="#ef5d5d" opacity=".85"/>
+  <path d="M158 215h155" stroke="#ef5d5d" stroke-width="10" stroke-linecap="round" opacity=".6"/>
+  <path d="M520 120h210v245H520z" fill="#080a09" stroke="#2b3935" stroke-width="8"/>
+  <path d="M625 120v245M520 242h210" stroke="#2b3935" stroke-width="6"/>
+  <path d="M525 365c75-48 138-48 202 0" fill="none" stroke="#ef5d5d" stroke-width="14" opacity=".55"/>
+  <path d="M0 555h900v145H0z" fill="#070908"/>
+  <path d="M185 430h315v86H185z" fill="#2a211c" stroke="#080a09" stroke-width="9"/>
+  <g fill="#e4b45f" stroke="#080a09" stroke-width="6">
+    <path d="M285 392l110 34-40 52-113-35z"/>
+    <path d="M320 416l28 10M274 433l42 13"/>
+  </g>
+  <path d="M605 500c20-52 64-63 92-28 26 33 9 78-48 82-26 2-45-16-44-54z" fill="#1f2a25" stroke="#080a09" stroke-width="8"/>
+  <path d="M650 470c-15 33-8 59 22 78" fill="none" stroke="#62d58b" stroke-width="8" stroke-linecap="round"/>
+  <path d="M122 535h650" stroke="#2b3935" stroke-width="24" stroke-linecap="round"/>
+</svg>

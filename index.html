@@ -3,26 +3,30 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Dead Link: Two Player Zombie Survival</title>
+    <title>Deadline: Two Player Trust Survival</title>
     <link rel="stylesheet" href="styles.css">
   </head>
   <body>
+    <section class="intro-screen hidden" id="introScreen">
+      <div class="intro-lines" id="introLines"></div>
+    </section>
+
     <main class="app">
       <section class="hero" id="setupScreen">
         <div class="hero-art" aria-hidden="true">
           <img src="assets/zombie-street.svg" alt="">
         </div>
         <div class="setup-panel">
-          <p class="eyebrow">Two player text survival</p>
-          <h1>Dead Link</h1>
+          <p class="eyebrow">Two player trust survival</p>
+          <h1>Deadline</h1>
           <p class="intro">
-            Make a room, send the link, and take turns surviving silly zombie trouble.
-            Food might heal you or ruin your day. Betrayal is allowed. Friendship is optional.
+            A short live prototype about two friends trapped during an emergency alert.
+            Talk only when the game lets you. Match choices to move.
           </p>
           <p id="connectionStatus" class="notice hidden"></p>
 
           <form id="hostForm" class="setup-form">
-            <label for="hostName">Host survivor name</label>
+            <label for="hostName">Player A name</label>
             <div class="row">
               <input id="hostName" name="hostName" autocomplete="name" maxlength="18" placeholder="Asha">
               <button type="submit">Create Link</button>
@@ -30,7 +34,7 @@
           </form>
 
           <form id="joinForm" class="setup-form hidden">
-            <label for="guestName">Receiver survivor name</label>
+            <label for="guestName">Player B name</label>
             <div class="row">
               <input id="guestName" name="guestName" autocomplete="name" maxlength="18" placeholder="Ravi">
               <button type="submit">Start Game</button>
@@ -51,7 +55,7 @@
       <section class="game hidden" id="gameScreen">
         <header class="topbar">
           <div>
-            <p class="eyebrow">Round <span id="dayLabel">1</span></p>
+            <p class="eyebrow" id="phaseLabel">House Phase</p>
             <h2 id="turnLabel">Your move</h2>
             <p class="timer-line" id="timerLine">25 seconds left</p>
           </div>
@@ -61,7 +65,7 @@
           </div>
         </header>
 
-        <section class="survivors" id="survivors"></section>
+        <section class="party-strip" id="partyStrip"></section>
 
         <section class="scene">
           <div class="scene-image">
@@ -71,12 +75,21 @@
             <p class="tag" id="scenarioTag">Scenario</p>
             <h3 id="scenarioTitle">The city waits.</h3>
             <p id="scenarioText"></p>
+            <p class="private-info hidden" id="privateInfo"></p>
             <div class="choices" id="choices"></div>
           </div>
         </section>
 
+        <section class="chat-panel hidden" id="chatPanel">
+          <div>
+            <h3>Limited Chat</h3>
+            <div class="chat-log" id="chatLog"></div>
+          </div>
+          <div class="chat-picks" id="chatPicks"></div>
+        </section>
+
         <section class="log-panel">
-          <h3>Survival Log</h3>
+          <h3>House Log</h3>
           <ol id="log"></ol>
         </section>
       </section>
