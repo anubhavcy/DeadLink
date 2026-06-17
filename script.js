@@ -25,6 +25,8 @@ const els = {
   copyInvite: document.querySelector("#copyInvite"),
   copySave: document.querySelector("#copySave"),
   newGame: document.querySelector("#newGame"),
+  menuToggle: document.querySelector("#menuToggle"),
+  menuPanel: document.querySelector("#menuPanel"),
   connectionStatus: document.querySelector("#connectionStatus"),
   phaseLabel: document.querySelector("#phaseLabel"),
   turnLabel: document.querySelector("#turnLabel"),
@@ -71,21 +73,21 @@ const events = {
     tone: "yellow",
     timer: 40,
     title: "Something is moving downstairs.",
-    text: "You both heard it. Nobody knows if it was inside the house.",
+    text: "The crash came from below. The house is silent after it.",
     image: "assets/sleepover-house.svg",
     chat: true,
     consensus: true,
     options: [
-      { id: "investigate", label: "Investigate", detail: "More information, more exposure." },
-      { id: "stay", label: "Stay Upstairs", detail: "Safer for now, less information." }
+      { id: "investigate", label: "Investigate downstairs", detail: "Face the noise. Learn what moved." },
+      { id: "stay", label: "Stay upstairs", detail: "Avoid the noise. Lose time." }
     ]
   },
   windows: {
-    label: "Hidden Information",
+    label: "Check Windows",
     tone: "yellow",
     timer: 35,
     title: "You check the windows.",
-    text: "Both of you see different parts of the same street.",
+    text: "The street is breaking apart in pieces. Neither of you sees the whole thing.",
     image: "assets/sleepover-house.svg",
     chat: true,
     consensus: true,
@@ -94,80 +96,66 @@ const events = {
       "Someone is banging on a neighbor's door. The neighbor is about to open it."
     ],
     options: [
-      { id: "watch", label: "Watch Longer", detail: "Gain information. Risk being seen." },
-      { id: "leaveWindow", label: "Leave Window", detail: "Lose information. Stay safer." }
+      { id: "watch", label: "Watch longer", detail: "Gain information. Risk being seen." },
+      { id: "leaveWindow", label: "Leave window immediately", detail: "Safer. Learn less." }
     ]
   },
   downstairs: {
-    label: "Danger",
+    label: "Investigate Downstairs",
     tone: "red",
     timer: 15,
-    title: "Dog panicking downstairs.",
-    text: "A chair is on the floor. The dog is shaking beside it.",
+    title: "Something moved downstairs.",
+    text: "The living room is dark. Something breathes near the fallen chair.",
     image: "assets/sleepover-house.svg",
     chat: false,
     consensus: true,
     options: [
-      { id: "lights", label: "Turn On Lights", detail: "Clear view. Big noise risk." },
-      { id: "flashlight", label: "Use Flashlight", detail: "Narrow view. Quieter." }
+      { id: "lights", label: "Turn on lights", detail: "See clearly. Risk attention." },
+      { id: "dark", label: "Keep lights off", detail: "Stay hidden. Move blind." }
     ]
   },
   safeZone: {
-    label: "Signal",
+    label: "Safe Zone Reveal",
     tone: "green",
-    timer: 22,
-    title: "Safe zone broadcast found.",
-    text: "Community Center accepting survivors. Distance: 3.2 km.",
+    timer: 8,
+    title: "Community center accepting survivors.",
+    text: "Distance: 3 km.",
     image: "assets/duo-escape.svg",
     chat: false,
     consensus: false,
     auto: true,
-    options: [
-      { id: "continue", label: "Continue", detail: "Prepare to search the house." }
-    ]
+    options: []
   },
-  search: {
-    label: "House Search",
+  trustTest: {
+    label: "First Trust Test",
     tone: "yellow",
-    timer: 35,
-    title: "Each of you can search one room.",
-    text: "You do not have time to search everything. Pick separately.",
-    image: "assets/sleepover-house.svg",
-    chat: true,
-    consensus: false,
-    options: [
-      { id: "kitchen", label: "Kitchen", detail: "Possible food." },
-      { id: "basement", label: "Basement", detail: "Possible route info." },
-      { id: "bedroom", label: "Bedroom", detail: "Possible phone help." },
-      { id: "bathroom", label: "Bathroom", detail: "Maybe first aid." }
-    ]
-  },
-  leaveOrCharge: {
-    label: "Discussion",
-    tone: "yellow",
-    timer: 40,
-    title: "Phones are dying.",
-    text: "You can leave now with weak battery, or charge first and lose time.",
-    image: "assets/sleepover-house.svg",
-    chat: true,
-    consensus: true,
-    options: [
-      { id: "leaveNow", label: "Leave Now", detail: "Use map. No GPS." },
-      { id: "charge", label: "Charge Phone", detail: "Battery restored. Danger rises." }
-    ]
-  },
-  exit: {
-    label: "Emergency Exit",
-    tone: "red",
-    timer: 18,
-    title: "The house is no longer safe.",
-    text: "Something hits the front door. You need to choose an exit.",
+    timer: 30,
+    title: "You find supplies in different rooms.",
+    text: "You can tell your friend, or keep quiet.",
     image: "assets/sleepover-house.svg",
     chat: false,
+    consensus: false,
+    private: [
+      "You found 2 energy bars.",
+      "You found 1 painkiller."
+    ],
+    options: [
+      { id: "tell", label: "Tell friend", detail: "Share what you found." },
+      { id: "quiet", label: "Keep quiet", detail: "Keep the advantage private." }
+    ]
+  },
+  voice: {
+    label: "Voice Event",
+    tone: "yellow",
+    timer: 35,
+    title: "A distant voice cries for help.",
+    text: "It could be a survivor. It could be a trap. It could be both.",
+    image: "assets/sleepover-house.svg",
+    chat: true,
     consensus: true,
     options: [
-      { id: "frontDoor", label: "Front Door", detail: "Fastest. Most exposed." },
-      { id: "backyard", label: "Backyard", detail: "Slower. More cover." }
+      { id: "investigateVoice", label: "Investigate", detail: "Risk danger for possible help." },
+      { id: "continueMoving", label: "Continue moving", detail: "Avoid the unknown." }
     ]
   },
   complete: {
@@ -452,7 +440,7 @@ function renderPrompt(event) {
   const me = state.players[playerIndex] || state.players[0];
   const privateLine = event.private?.[playerIndex] || "";
   els.phaseLabel.textContent = event.label;
-  els.turnLabel.textContent = state.status === "outcome" ? "Result" : event.chat ? "Discuss. Match choices." : "Choose fast.";
+  els.turnLabel.textContent = state.status === "outcome" ? "Result" : event.chat ? "Match the same option." : "Choose.";
   els.scenarioTag.textContent = toneLabel(event);
   els.scenarioTitle.textContent = event.title;
   els.scenarioText.textContent = event.text;
@@ -484,7 +472,7 @@ function renderChoices(event) {
     return;
   }
 
-  if (event.eventId === "complete" || event.options.length === 0) return;
+  if (state.eventId === "complete" || event.options.length === 0) return;
 
   const myChoice = state.choices?.[playerId];
   const picks = Object.entries(state.choices || {});
@@ -507,7 +495,7 @@ function renderChoices(event) {
   } else if (myChoice) {
     const wait = document.createElement("p");
     wait.className = "waiting-card";
-    wait.textContent = event.consensus ? "Locked in. Waiting for the other player to match." : "Locked in. Waiting for the other search.";
+    wait.textContent = event.consensus ? "Locked in. Waiting for the other player to match." : "Locked in. Waiting for the other player.";
     els.choices.appendChild(wait);
   }
 
@@ -598,7 +586,7 @@ function tryResolveEvent(room, forced = false) {
   if (!forced && picks.length < ids.length && !event.auto) return;
 
   if (event.auto) {
-    setOutcome(room, "Signal Locked", "Community Center. 3.2 km. Player A battery 17%. Player B battery 14%.", "search");
+    setOutcome(room, "Safe Zone Revealed", "Community Center accepting survivors. Distance: 3 km.", "trustTest");
     return;
   }
 
@@ -609,8 +597,8 @@ function tryResolveEvent(room, forced = false) {
     return;
   }
 
-  if (room.eventId === "search") {
-    resolveSearch(room, forced);
+  if (room.eventId === "trustTest") {
+    resolveTrustTest(room, forced);
   }
 }
 
@@ -625,8 +613,7 @@ function applyConsensusChoice(room, event, selected) {
     firstChoice: selected === "investigate" ? "downstairs" : "windows",
     windows: "safeZone",
     downstairs: "safeZone",
-    leaveOrCharge: "exit",
-    exit: "complete"
+    voice: "complete"
   };
 
   const outcome = outcomeFor(room, event, selected);
@@ -650,52 +637,35 @@ function outcomeFor(room, event, selected) {
     return { title: "Lights on.", text: "The dog knocked over a chair. It sees the light and starts barking.", effects: { danger: 1 } };
   }
   if (room.eventId === "downstairs") {
-    return { title: "Flashlight only.", text: "The dog calms. Player A trips over the chair in the dark.", effects: { hp: { 0: -5 } } };
+    return { title: "Lights off.", text: "Player A trips in the dark. The dog goes quiet.", effects: { hp: { 0: -5 } } };
   }
-  if (room.eventId === "leaveOrCharge" && selected === "charge") {
-    return { title: "You charge the phones.", text: "Battery restored. The delay gives the house another sound to answer.", effects: { danger: 1, battery: 70 } };
+  if (room.eventId === "voice" && selected === "investigateVoice") {
+    const roll = randomFor(room.eventStartedAt, "voice");
+    if (roll < 0.34) return { title: "Survivor.", text: "The voice belongs to someone alive. They point toward a safer lane." };
+    if (roll < 0.67) return { title: "Mimic.", text: "The voice repeats the same words. Too perfectly.", effects: { danger: 1 } };
+    return { title: "Infected survivor.", text: "They are alive, but not for long. Getting close costs you.", effects: { hp: { 0: -8, 1: -8 }, danger: 1 } };
   }
-  if (room.eventId === "leaveOrCharge") {
-    return { title: "You leave immediately.", text: "The paper map becomes your only guide. No GPS." };
-  }
-  if (room.eventId === "exit" && selected === "frontDoor") {
-    return { title: "Front door.", text: "Fastest route. You step directly into whatever is outside.", effects: { danger: 1 } };
-  }
-  return { title: "Backyard.", text: "Slower route. More cover. Less certainty." };
+  return { title: "You keep moving.", text: "The voice fades behind you. You will never know what it was." };
 }
 
-function resolveSearch(room, forced) {
+function resolveTrustTest(room, forced) {
   const ids = room.players.map(player => player.id);
-  const choices = ids.map((id, index) => room.choices?.[id] || (forced ? events.search.options[index]?.id : null));
+  const choices = ids.map(id => room.choices?.[id] || (forced ? "quiet" : null));
   if (choices.some(choice => !choice)) return;
 
-  const found = [];
+  const lines = [];
   choices.forEach((choiceId, index) => {
     const player = room.players[index];
-    if (choiceId === "kitchen") {
-      player.items.snackPacks = (player.items.snackPacks || 0) + 2;
-      found.push(`${player.name} found 2 snack packs.`);
-    }
-    if (choiceId === "basement") {
-      player.items.map = 1;
-      found.push(`${player.name} found a paper map.`);
-    }
-    if (choiceId === "bedroom") {
-      player.items.charger = 1;
-      found.push(`${player.name} found a phone charger.`);
-    }
-    if (choiceId === "bathroom") {
-      const kit = randomFor(room.eventStartedAt, player.id, "bathroom") > 0.7;
-      if (kit) {
-        player.items.firstAid = 1;
-        found.push(`${player.name} found a first aid kit.`);
-      } else {
-        found.push(`${player.name} found nothing useful.`);
-      }
+    if (index === 0) player.items.energyBars = 2;
+    if (index === 1) player.items.painkiller = 1;
+    if (choiceId === "tell") {
+      lines.push(`${player.name} tells the truth.`);
+    } else {
+      lines.push(`${player.name} keeps quiet.`);
     }
   });
 
-  setOutcome(room, "House searched.", found.join(" "), "leaveOrCharge");
+  setOutcome(room, "Supplies found.", lines.join(" "), "voice");
 }
 
 function setOutcome(room, title, text, nextEventId, effects = {}) {
@@ -842,6 +812,9 @@ els.newGame.addEventListener("click", () => {
   url.search = "";
   url.hash = "";
   window.location.href = url.toString();
+});
+els.menuToggle.addEventListener("click", () => {
+  els.menuPanel.classList.toggle("hidden");
 });
 
 boot();
