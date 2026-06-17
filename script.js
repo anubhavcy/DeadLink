@@ -315,6 +315,7 @@ function subscribeToRoom(id) {
       return;
     }
 
+    resolveIfReadyFromSnapshot();
     renderGame();
   });
 }
@@ -556,15 +557,19 @@ function renderLog() {
 
 async function submitChoice(choiceId) {
   if (!state || state.status !== "event") return;
-  await runTransaction(roomRef(), room => {
-    if (!room || room.status !== "event") return room;
-    if (!room.players?.some(player => player.id === playerId)) return room;
-    room.choices = room.choices || {};
-    room.choices[playerId] = choiceId;
-    room.updatedAt = serverTimestamp();
-    tryResolveEvent(room);
-    return room;
-  });
+  try {
+    await runTransaction(roomRef(), room => {
+      if (!room || room.status !== "event") return room;
+      if (!room.players?.some(player => player.id === playerId)) return room;
+      room.choices = room.choices || {};
+      room.choices[playerId] = choiceId;
+      room.updatedAt = serverTimestamp();
+      tryResolveEvent(room);
+      return room;
+    });
+  } catch (error) {
+    showNotice(`Choice failed: ${error.message}`, true);
+  }
 }
 
 async function sendChat(text) {
@@ -600,6 +605,30 @@ function tryResolveEvent(room, forced = false) {
   if (room.eventId === "trustTest") {
     resolveTrustTest(room, forced);
   }
+}
+
+function resolveIfReadyFromSnapshot() {
+  if (!state || state.status !== "event" || playerIndex < 0) return;
+  const event = currentEvent(state);
+  if (event.auto) return;
+  const playerIds = state.players.map(player => player.id);
+  const picks = playerIds.map(id => state.choices?.[id]).filter(Boolean);
+  if (picks.length < playerIds.length) return;
+  if (event.consensus && new Set(picks).size > 1) return;
+
+  runTransaction(roomRef(), room => {
+    if (!room || room.status !== "event") return room;
+    const roomEvent = currentEvent(room);
+    const ids = room.players.map(player => player.id);
+    const roomPicks = ids.map(id => room.choices?.[id]).filter(Boolean);
+    if (roomPicks.length < ids.length) return room;
+    if (roomEvent.consensus && new Set(roomPicks).size > 1) return room;
+    tryResolveEvent(room);
+    room.updatedAt = serverTimestamp();
+    return room;
+  }).catch(error => {
+    showNotice(`Room sync failed: ${error.message}`, true);
+  });
 }
 
 function forceConsensusPick(room, event) {
