@@ -59,13 +59,14 @@
             <h2 id="turnLabel">Your move</h2>
             <p class="timer-line" id="timerLine">25 seconds left</p>
           </div>
-          <div class="actions">
-            <button id="copySave" type="button">Copy Room Link</button>
-            <button id="newGame" type="button">New Game</button>
+          <div class="menu-wrap">
+            <button class="menu-toggle" id="menuToggle" type="button" aria-label="Open menu">...</button>
+            <div class="actions menu-panel hidden" id="menuPanel">
+              <button id="copySave" type="button">Copy Room Link</button>
+              <button id="newGame" type="button">New Game</button>
+            </div>
           </div>
         </header>
-
-        <section class="party-strip" id="partyStrip"></section>
 
         <section class="scene">
           <div class="scene-image">
@@ -79,6 +80,8 @@
             <div class="choices" id="choices"></div>
           </div>
         </section>
+
+        <section class="party-strip" id="partyStrip"></section>
 
         <section class="chat-panel hidden" id="chatPanel">
           <div>
